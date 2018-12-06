@@ -182,14 +182,26 @@ def getAllPredictions(evidence, categories, category, probsUni, lambdas=[0.2]*5)
     return recommendedWords
 
 
-# In[28]:
+# In[123]:
 
 
-get_ipython().run_cell_magic('time', '', "predictNextWord('', categories, 'general', \\\n                        probsUnigram(categories, 'general'))")
+def predictCategory(evidence, categories, words):
+    categoriesV = ['business', 'entertainment', 'politics', 'sport', 'tech']
+    categoriesProbs = [0]*5
+    categoriesCounts = [0]*5
+    for word in evidence.split():
+        for i in range(1, len(categories)):
+            uniProbs = probsUnigram(categories, categoriesV[i-1])
+            wordProb = unigramProbability(word, uniProbs, words)
+            if wordProb != 0:
+                categoriesCounts[i-1] += 1
+                categoriesProbs[i-1] += wordProb
+    
 
+    for i in range(0, len(categoriesProbs)):
+        if categoriesCounts[i] != 0:
+            categoriesProbs[i] *= categoriesCounts[i]
 
-# In[425]:
-
-
-get_ipython().run_cell_magic('time', '', "evidence = 'this is one example'\nfor i in range(0, 5):\n    newWord = predictNextWord(evidence, categories, 'general', \\\n                        probsUnigram(categories, 'general'))\n    evidence = ' '.join(evidence.split()[-3:] + [newWord])\nprint(evidence)")
+    print(categoriesProbs)
+    return categoriesV[categoriesProbs.index(max(categoriesProbs))]
 
