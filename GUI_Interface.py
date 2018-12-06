@@ -10,6 +10,7 @@ class GUIInterface:
     def add_text(self,message):
         message += " "
         self.scrolling_window.insert(END,message)
+        self.get_text(None)
 
     def get_text(self, event):
         whole_text = self.scrolling_window.get(1.0,END)
@@ -18,10 +19,25 @@ class GUIInterface:
         last_four = word_wise[-4:]
         print(whole_text)
         print(last_four)
+        self.update_buttons(["example"] * 15)
+
+    def update_buttons(self, new_predictions):
+        for i,button in enumerate(self.buttons):
+            button.config(text = new_predictions[i], command = lambda i=i: self.add_text(new_predictions[i]))
+
+    def generate_prediction(self):
+        print("Prediction coming right up!")
+        self.top_frame_label.config( text = "Category changed TODO")
 
     def handleGUI(self):
         main_window = Tk()
         # Creating scrolling window and adding callback
+        self.topFrame = Frame(main_window)
+        self.topFrame.pack()
+        self.top_frame_label = Label(self.topFrame, text = "Current category is: ")
+        self.top_frame_label.pack(side = LEFT, padx = 50)
+        self.top_frame_button = Button(self.topFrame, text = "Predict category", command = self.generate_prediction)
+        self.top_frame_button.pack( side = RIGHT, padx = 50)
         self.scrolling_window = ScrolledText(main_window, width=100, height=20)
         self.scrolling_window.pack()
         main_window.wm_title("Categorized text predicter")
@@ -32,6 +48,7 @@ class GUIInterface:
         options_frame = []
         messages = ["example", "example example", "example example example", "example example example example","example example example example example"]
         labels = []
+        self.buttons = []
         for j in range(0,3):
             options_frame.append(Frame(main_window))
             options_frame[j].pack()
@@ -39,8 +56,11 @@ class GUIInterface:
             label = Label(options_frame[j], text=LABELS_DICT[j])
             label.pack()
             for i in range(0,5):
-                options.append(tkinter.Button( options_frame[j], text = messages[i], command = lambda i=i: self.add_text(messages[i])))
-                options[i].pack(side = LEFT)
+                temp_button = tkinter.Button(options_frame[j])
+                self.buttons.append(temp_button)
+                #options.append(tkinter.Button( options_frame[j], text = messages[i], command = lambda i=i: self.add_text(messages[i])))
+                #options[i].pack(side = LEFT)
+                temp_button.pack(side = LEFT)
 
         main_window.mainloop()
 
