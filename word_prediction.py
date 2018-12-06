@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[162]:
+# In[1]:
 
 
 from collections import defaultdict
@@ -16,7 +16,7 @@ for word in wordsFile:
     words.append(word.split()[0])
 
 
-# In[3]:
+# In[48]:
 
 
 # creating dict with every category's nGram count distribution
@@ -50,7 +50,7 @@ def generate_categories_dict():
     return categories
 
 
-# In[404]:
+# In[4]:
 
 
 def probsUnigram(categories, category):
@@ -58,28 +58,57 @@ def probsUnigram(categories, category):
     return categories[category][0]
 
 
-# In[405]:
+# In[29]:
 
 
 def probsNGram(evidence, categories, category, words):
     # Returns the category's nGram probabilities for every nGrams
-    n = len(evidence.split())
+    evidenceWords = evidence.split()
+    n = len(evidenceWords)
+    if n > 4:
+        n = 4
+        evidenceWords = evidenceWords[:n]
+    if any(word not in words for word in evidenceWords):
+        return [['', 0]]
     corpus = categories[category][n]
-    counts = [[words[v[n]], v[n]] for v in corpus if [words.index(e) for e in evidence.split()] == v[:n]]
+    counts = [[words[v[n]], v[n+1]] for v in corpus if [words.index(e) for e in evidenceWords] == v[:n]]
     countsSum = sum([v[1] for v in counts])
     probabilities = [[v[0], v[1]/countsSum] for v in counts]
     return probabilities
 
 
-# In[406]:
+# In[46]:
+
+
+def probsNGram(evidence, categories, category, words):
+    # Returns the category's nGram probabilities for every nGrams
+    evidenceWords = evidence.split()
+    n = len(evidenceWords)
+    if n > 4:
+        n = 4
+        evidenceWords = evidenceWords[-n:]
+    corpus = categories[category][n]
+    try:
+        counts = [[words[v[n]], v[n+1]] for v in corpus if [words.index(e) for e in evidenceWords] == v[:n]]
+    except ValueError:
+        return [['', 0]]
+    countsSum = sum([v[1] for v in counts])
+    probabilities = [[v[0], v[1]/countsSum] for v in counts]
+    return probabilities
+
+
+# In[19]:
 
 
 def unigramProbability(word, probVector, words):
     # Returns the category's unigram probability for a specific word
-    return probVector[words.index(word)]
+    if word in words:
+        return probVector[words.index(word)]
+    else:
+        return 0
 
 
-# In[407]:
+# In[20]:
 
 
 def nGramProbability(word, probVector):
@@ -91,7 +120,7 @@ def nGramProbability(word, probVector):
         return prob[0]
 
 
-# In[408]:
+# In[21]:
 
 
 def mixedProb(word, words, uniDist, nGramsDists, lambdas):
@@ -102,53 +131,36 @@ def mixedProb(word, words, uniDist, nGramsDists, lambdas):
     return mixed
 
 
-# In[429]:
+# In[45]:
 
 
 def predictNextWord(evidence, categories, category, probsUni, lambdas=[0.2]*5):
     # Predicts the next word given a reference text
-    evidenceWords = evidence
+    evidenceWords = evidence.split()
     n = len(evidenceWords)
+    if n > 4:
+        n = 4
+        evidenceWords = evidenceWords[-n:]
     sumRelevantLambdas = sum(lambdas[:n+1])
     normLambda = [x/sumRelevantLambdas for x in lambdas[:n+1]]
     nGramsDists = []
-
-    """
-    with ProcessPoolExecutor() as executor:
-
-        futures = [winprocess.submit(executor, probsNGram, ' '.join(evidenceWords[-i:]), categories, category, words)\
-                  for i in range(1, n+1)]
-
-        concurrent.futures.wait(futures)
-        nGramsDists = [f.result() for f in futures]
-    """
-
+    
     for i in range(1, n+1):
         newEvidence = ' '.join(evidenceWords[-i:])
         nGramsDists.append(probsNGram(newEvidence, categories, category, words))
-
-
+    
+    
     probabilities = []
-    """
-    with ProcessPoolExecutor() as executor:
-        args = categories, category, words, probsUni, nGramsDists, normLambda
-        futures = [winprocess.submit(executor, calculateMixedProbs, group, *args)\
-                  for group in grouper(words, 1000)]
-
-        concurrent.futures.wait(futures)
-        probabilities = list(zip(words, [f.result() for f in futures]))
-
-    """
     for word in words:
         mixed = mixedProb(word, words, probsUni, nGramsDists, normLambda)
         probabilities.append([word, mixed])
-
-
+    
+    
     probabilities = sorted(probabilities, key = lambda x:-x[1])
     return [v[0] for v in probabilities[:3]]
 
 
-# In[433]:
+# In[23]:
 
 
 def getAllPredictions(evidence, categories, category, probsUni, lambdas=[0.2]*5):
@@ -170,13 +182,14 @@ def getAllPredictions(evidence, categories, category, probsUni, lambdas=[0.2]*5)
     return recommendedWords
 
 
-# In[430]:
+# In[28]:
 
 
-#get_ipython().run_cell_magic('time', '', "predictNextWord('tv future in the', categories, 'general', \\\n                        probsUnigram(categories, 'general'))")
+get_ipython().run_cell_magic('time', '', "predictNextWord('', categories, 'general', \\\n                        probsUnigram(categories, 'general'))")
 
-#
+
 # In[425]:
 
 
-#get_ipython().run_cell_magic('time', '', "evidence = 'this is one example'\nfor i in range(0, 5):\n    newWord = predictNextWord(evidence, categories, 'general', \\\n                        probsUnigram(categories, 'general'))\n    evidence = ' '.join(evidence.split()[-3:] + [newWord])\nprint(evidence)")
+get_ipython().run_cell_magic('time', '', "evidence = 'this is one example'\nfor i in range(0, 5):\n    newWord = predictNextWord(evidence, categories, 'general', \\\n                        probsUnigram(categories, 'general'))\n    evidence = ' '.join(evidence.split()[-3:] + [newWord])\nprint(evidence)")
+
