@@ -1,31 +1,38 @@
 from tkinter import *
 import tkinter
+from word_prediction import *
 from tkinter.scrolledtext import ScrolledText
 
 LABELS_DICT = {0: "1st options", 1: "2nd options", 2: "3rd options"}
 class GUIInterface:
     def __init__(self):
-        self.value = 0
+        #self.value = 0
+        self.categories_dict = generate_categories_dict()
 
     def add_text(self,message):
         message += " "
         self.scrolling_window.insert(END,message)
-        self.get_text(None)
+        self.get_predictions(None)
 
-    def get_text(self, event):
+    def get_predictions(self, event):
         whole_text = self.scrolling_window.get(1.0,END)
         whole_text = whole_text.strip()
         word_wise = whole_text.split(" ")
-        last_four = word_wise[-4:]
+        evidence = word_wise[-4:]
         print(whole_text)
-        print(last_four)
-        self.update_buttons(["example"] * 15)
+        print(evidence)
+        next_words = ["example","example","example"]
+        # Getting next prediction
+        if( len(evidence) > 3):
+            next_words = predictNextWord(evidence, self.categories_dict, "politics", probsUnigram(self.categories_dict, "politics"))
+        self.update_buttons([ [word] * 5 for word in next_words])
 
     def update_buttons(self, new_predictions):
+        print(new_predictions)
         for i,button in enumerate(self.buttons):
-            button.config(text = new_predictions[i], command = lambda i=i: self.add_text(new_predictions[i]))
+            button.config(text = new_predictions[i//5][i % 5], command = lambda i=i: self.add_text(new_predictions[i//5][i%5]))
 
-    def generate_prediction(self):
+    def predict_category(self):
         print("Prediction coming right up!")
         self.top_frame_label.config( text = "Category changed TODO")
 
@@ -36,13 +43,13 @@ class GUIInterface:
         self.topFrame.pack()
         self.top_frame_label = Label(self.topFrame, text = "Current category is: ")
         self.top_frame_label.pack(side = LEFT, padx = 50)
-        self.top_frame_button = Button(self.topFrame, text = "Predict category", command = self.generate_prediction)
+        self.top_frame_button = Button(self.topFrame, text = "Predict category", command = self.predict_category)
         self.top_frame_button.pack( side = RIGHT, padx = 50)
         self.scrolling_window = ScrolledText(main_window, width=100, height=20)
         self.scrolling_window.pack()
         main_window.wm_title("Categorized text predicter")
         #main_window.bind_all("<space>", lambda scrolling_window=scrolling_window: print_words(scrolling_window))
-        main_window.bind_all("<space>", self.get_text)
+        main_window.bind_all("<space>", self.get_predictions)
 
         # Creating frames to keep buttons for suggestions
         options_frame = []

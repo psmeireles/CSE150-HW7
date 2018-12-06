@@ -20,32 +20,34 @@ for word in wordsFile:
 
 
 # creating dict with every category's nGram count distribution
-categories = defaultdict()
-for category in ['general', 'business', 'entertainment', 'politics', 'sport', 'tech']:
-    ngrams = []
-    for n in ['uni', 'bi', 'tri', 'four', 'five']:
-        if category == 'general':
-            filename = f'{category}/{n}grams.txt'
-        else:
-            filename = f'{category}/{category}_{n}grams.txt'
-        
-        file = open(filename)
-        
-        ngramVector = []
-        for l in file:
-            if n == 'uni':
-                ngramVector.append(int(l))
+def generate_categories_dict():
+    categories = defaultdict()
+    for category in ['general', 'business', 'entertainment', 'politics', 'sport', 'tech']:
+        ngrams = []
+        for n in ['uni', 'bi', 'tri', 'four', 'five']:
+            if category == 'general':
+                filename = f'{category}/{n}grams.txt'
             else:
-                ngramVector.append([int(x) for x in l.split()])
-        file.close()
-        
-        # precomputing probabilities for unigrams
-        if n == 'uni':
-            uniSum = sum(ngramVector)
-            ngramVector = [x/uniSum for x in ngramVector]
-            
-        ngrams.append(ngramVector)
-    categories[category] = ngrams
+                filename = f'{category}/{category}_{n}grams.txt'
+
+            file = open(filename)
+
+            ngramVector = []
+            for l in file:
+                if n == 'uni':
+                    ngramVector.append(int(l))
+                else:
+                    ngramVector.append([int(x) for x in l.split()])
+            file.close()
+
+            # precomputing probabilities for unigrams
+            if n == 'uni':
+                uniSum = sum(ngramVector)
+                ngramVector = [x/uniSum for x in ngramVector]
+
+            ngrams.append(ngramVector)
+        categories[category] = ngrams
+    return categories
 
 
 # In[404]:
@@ -105,27 +107,27 @@ def mixedProb(word, words, uniDist, nGramsDists, lambdas):
 
 def predictNextWord(evidence, categories, category, probsUni, lambdas=[0.2]*5):
     # Predicts the next word given a reference text
-    evidenceWords = evidence.split()
+    evidenceWords = evidence
     n = len(evidenceWords)
     sumRelevantLambdas = sum(lambdas[:n+1])
     normLambda = [x/sumRelevantLambdas for x in lambdas[:n+1]]
     nGramsDists = []
-    
+
     """
     with ProcessPoolExecutor() as executor:
-    
+
         futures = [winprocess.submit(executor, probsNGram, ' '.join(evidenceWords[-i:]), categories, category, words)\
                   for i in range(1, n+1)]
 
         concurrent.futures.wait(futures)
         nGramsDists = [f.result() for f in futures]
     """
-    
+
     for i in range(1, n+1):
         newEvidence = ' '.join(evidenceWords[-i:])
         nGramsDists.append(probsNGram(newEvidence, categories, category, words))
-    
-    
+
+
     probabilities = []
     """
     with ProcessPoolExecutor() as executor:
@@ -140,8 +142,8 @@ def predictNextWord(evidence, categories, category, probsUni, lambdas=[0.2]*5):
     for word in words:
         mixed = mixedProb(word, words, probsUni, nGramsDists, normLambda)
         probabilities.append([word, mixed])
-    
-    
+
+
     probabilities = sorted(probabilities, key = lambda x:-x[1])
     return [v[0] for v in probabilities[:3]]
 
@@ -171,11 +173,10 @@ def getAllPredictions(evidence, categories, category, probsUni, lambdas=[0.2]*5)
 # In[430]:
 
 
-get_ipython().run_cell_magic('time', '', "predictNextWord('tv future in the', categories, 'general', \\\n                        probsUnigram(categories, 'general'))")
+#get_ipython().run_cell_magic('time', '', "predictNextWord('tv future in the', categories, 'general', \\\n                        probsUnigram(categories, 'general'))")
 
-
+#
 # In[425]:
 
 
-get_ipython().run_cell_magic('time', '', "evidence = 'this is one example'\nfor i in range(0, 5):\n    newWord = predictNextWord(evidence, categories, 'general', \\\n                        probsUnigram(categories, 'general'))\n    evidence = ' '.join(evidence.split()[-3:] + [newWord])\nprint(evidence)")
-
+#get_ipython().run_cell_magic('time', '', "evidence = 'this is one example'\nfor i in range(0, 5):\n    newWord = predictNextWord(evidence, categories, 'general', \\\n                        probsUnigram(categories, 'general'))\n    evidence = ' '.join(evidence.split()[-3:] + [newWord])\nprint(evidence)")
