@@ -37,8 +37,6 @@ def posteriorProbDenom(words):
 
 	return denom
 
-
-
 # predict closest category based on given string of information using Naive Bayes' Classification
 # Returns string corresponding to most probable category name
 # Parameter: words needs to be lowercase
