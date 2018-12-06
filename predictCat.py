@@ -52,5 +52,6 @@ def predictCategory(words):
 	probList = [posteriorProbNum(words, cat)/denom for cat in catList]
 	print(probList)
 	maxIndex = probList.index(max(probList))
+	
 	return(catList[maxIndex])
 	
