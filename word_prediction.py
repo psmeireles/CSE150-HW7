@@ -131,7 +131,7 @@ def mixedProb(word, words, uniDist, nGramsDists, lambdas):
     return mixed
 
 
-# In[45]:
+# In[156]:
 
 
 def predictNextWord(evidence, categories, category, probsUni, lambdas=[0.2]*5):
@@ -157,32 +157,26 @@ def predictNextWord(evidence, categories, category, probsUni, lambdas=[0.2]*5):
     
     
     probabilities = sorted(probabilities, key = lambda x:-x[1])
-    return [v[0] for v in probabilities[:3]]
+    return probabilities[0][0]
 
 
-# In[23]:
+# In[165]:
 
 
 def getAllPredictions(evidence, categories, category, probsUni, lambdas=[0.2]*5):
     # Returns the 3 most probable fivegrams
     recommendedWords = []
     newEvidence = evidence
-    for i in range(0, 15):
-        newWords = predictNextWord(newEvidence, categories, 'general',                             probsUnigram(categories, 'general'))
-        if i == 0:
-            for j in range(0, len(newWords)):
-                recommendedWords.append([newWords[j]])
-        else:
-            recommendedWords[i%5].append(newWords[0])
+    for i in range(0, 5):
+        newWord = predictNextWord(newEvidence, categories, category, probsUnigram(categories, category))
 
-        if i%5 == 0:
-            newEvidence = ' '.join(evidence.split()[-3:] + [recommendedWords[i/5][i%5]])
-        else:
-            newEvidence = ' '.join(newEvidence.split()[-3:] + [recommendedWords[i/5][i%5]])
+        recommendedWords.append(newWord)
+        print(newWord)
+        newEvidence = ' '.join(newEvidence.split()[-3:] + [newWord])
     return recommendedWords
 
 
-# In[123]:
+# In[131]:
 
 
 def predictCategory(evidence, categories, words):
@@ -202,6 +196,4 @@ def predictCategory(evidence, categories, words):
         if categoriesCounts[i] != 0:
             categoriesProbs[i] *= categoriesCounts[i]
 
-    print(categoriesProbs)
     return categoriesV[categoriesProbs.index(max(categoriesProbs))]
-
